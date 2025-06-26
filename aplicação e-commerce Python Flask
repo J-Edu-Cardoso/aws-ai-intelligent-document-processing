@@ -1,0 +1,209 @@
+graph TB
+    %% Users and Internet
+    Users[👥 Users<br/>Web/Mobile]
+    Internet[🌐 Internet]
+    
+    %% AWS Cloud Infrastructure
+    subgraph AWS["☁️ AWS Cloud - E-Commerce Platform"]
+        
+        %% Route 53
+        Route53[🌍 Route 53<br/>DNS Management<br/>shop.exemplo.com]
+        
+        %% CloudFront CDN
+        CloudFront[⚡ CloudFront CDN<br/>Static Assets<br/>CSS, JS, Images]
+        
+        %% WAF
+        WAF[🛡️ AWS WAF<br/>Web Application Firewall<br/>DDoS Protection]
+        
+        %% VPC
+        subgraph VPC["🏗️ VPC (10.0.0.0/16)"]
+            
+            %% Internet Gateway
+            IGW[🚪 Internet Gateway]
+            
+            %% Application Load Balancer
+            ALB[⚖️ Application Load Balancer<br/>HTTPS Termination<br/>Health Checks]
+            
+            %% Availability Zone 1
+            subgraph AZ1["🏢 Availability Zone us-east-1a"]
+                subgraph PubSub1["🌐 Public Subnet"]
+                    EC2_1[💻 EC2 t3.medium<br/>🐍 Python Flask App<br/>Gunicorn + Nginx<br/>Port 80/443]
+                    NAT1[🔄 NAT Gateway]
+                end
+                
+                subgraph PrivSub1["🔒 Private Subnet"]
+                    RDS_Primary[🗄️ RDS MySQL 8.0<br/>Primary Database<br/>Products, Orders, Users<br/>db.t3.micro]
+                    ElastiCache1[⚡ ElastiCache Redis<br/>Session Store<br/>Product Cache]
+                end
+            end
+            
+            %% Availability Zone 2
+            subgraph AZ2["🏢 Availability Zone us-east-1b"]
+                subgraph PubSub2["🌐 Public Subnet"]
+                    EC2_2[💻 EC2 t3.medium<br/>🐍 Python Flask App<br/>Gunicorn + Nginx<br/>Port 80/443]
+                    NAT2[🔄 NAT Gateway]
+                end
+                
+                subgraph PrivSub2["🔒 Private Subnet"]
+                    RDS_Standby[🗄️ RDS MySQL 8.0<br/>Standby Database<br/>Multi-AZ Failover<br/>db.t3.micro]
+                    ElastiCache2[⚡ ElastiCache Redis<br/>Session Store<br/>Product Cache]
+                end
+            end
+        end
+        
+        %% Auto Scaling Group
+        subgraph ASG["🔄 Auto Scaling Group"]
+            LaunchTemplate[📝 Launch Template<br/>Python Flask AMI<br/>User Data Script<br/>Min: 2, Max: 10]
+            ScalingPolicy[📊 Scaling Policy<br/>Target: 70% CPU<br/>Scale Out: +2 instances<br/>Scale In: -1 instance]
+        end
+        
+        %% Storage Services
+        subgraph Storage["🪣 Storage Services"]
+            S3_Assets[🪣 S3 Bucket - Assets<br/>Product Images<br/>User Uploads<br/>Static Files]
+            S3_Backups[🪣 S3 Bucket - Backups<br/>Database Backups<br/>Application Logs<br/>Versioning Enabled]
+        end
+        
+        %% Additional Services
+        subgraph Services["🛠️ Additional AWS Services"]
+            SES[📧 Amazon SES<br/>Order Confirmations<br/>Password Reset<br/>Marketing Emails]
+            Lambda[⚡ AWS Lambda<br/>Image Processing<br/>Order Processing<br/>Scheduled Tasks]
+            SQS[📬 Amazon SQS<br/>Order Queue<br/>Email Queue<br/>Background Tasks]
+            Secrets[🔐 AWS Secrets Manager<br/>Database Credentials<br/>API Keys<br/>JWT Secrets]
+        end
+        
+        %% Monitoring and Logging
+        subgraph Monitoring["📊 Monitoring & Logging"]
+            CloudWatch[📈 CloudWatch<br/>Application Metrics<br/>Custom Dashboards<br/>Alarms & Alerts]
+            CloudTrail[🔍 CloudTrail<br/>API Call Logging<br/>Security Auditing]
+            XRay[🔬 AWS X-Ray<br/>Distributed Tracing<br/>Performance Analysis]
+            SNS[📧 Amazon SNS<br/>Alert Notifications<br/>Admin Alerts<br/>System Health]
+        end
+        
+        %% Security
+        subgraph Security["🛡️ Security"]
+            IAM[👤 IAM Roles<br/>EC2 Instance Profile<br/>Lambda Execution Role<br/>Least Privilege]
+            KMS[🔑 AWS KMS<br/>Data Encryption<br/>S3 Encryption<br/>RDS Encryption]
+            SecurityGroups[🔐 Security Groups<br/>ALB: 80,443<br/>EC2: 80 from ALB<br/>RDS: 3306 from EC2]
+        end
+    end
+    
+    %% External Services
+    PaymentGateway[💳 Payment Gateway<br/>Stripe/PayPal API]
+    EmailService[📧 External Email<br/>Admin Notifications]
+    
+    %% Application Flow Connections
+    Users --> Internet
+    Internet --> Route53
+    Route53 --> CloudFront
+    CloudFront --> WAF
+    WAF --> IGW
+    IGW --> ALB
+    
+    %% Load Balancer to EC2
+    ALB --> EC2_1
+    ALB --> EC2_2
+    
+    %% Auto Scaling
+    ASG --> EC2_1
+    ASG --> EC2_2
+    LaunchTemplate --> ASG
+    ScalingPolicy --> ASG
+    
+    %% Database Connections
+    EC2_1 -.->|🐍 SQLAlchemy ORM<br/>Connection Pool| RDS_Primary
+    EC2_2 -.->|🐍 SQLAlchemy ORM<br/>Connection Pool| RDS_Primary
+    RDS_Primary -.->|Automatic Replication| RDS_Standby
+    
+    %% Cache Connections
+    EC2_1 -.->|🐍 Redis-py<br/>Session & Cache| ElastiCache1
+    EC2_2 -.->|🐍 Redis-py<br/>Session & Cache| ElastiCache2
+    
+    %% Storage Connections
+    EC2_1 -.->|🐍 Boto3 SDK<br/>File Uploads| S3_Assets
+    EC2_2 -.->|🐍 Boto3 SDK<br/>File Uploads| S3_Assets
+    Lambda -.->|Image Processing| S3_Assets
+    Lambda -.->|Backup Storage| S3_Backups
+    
+    %% Queue and Lambda
+    EC2_1 -.->|🐍 Boto3<br/>Send Messages| SQS
+    EC2_2 -.->|🐍 Boto3<br/>Send Messages| SQS
+    SQS -.->|Trigger Functions| Lambda
+    
+    %% Email Service
+    Lambda -.->|Send Emails| SES
+    SES -.->|Delivery Status| SNS
+    
+    %% Secrets Management
+    EC2_1 -.->|🐍 Boto3<br/>Get Secrets| Secrets
+    EC2_2 -.->|🐍 Boto3<br/>Get Secrets| Secrets
+    Lambda -.->|Get API Keys| Secrets
+    
+    %% Monitoring
+    CloudWatch --> EC2_1
+    CloudWatch --> EC2_2
+    CloudWatch --> RDS_Primary
+    CloudWatch --> ALB
+    CloudWatch --> Lambda
+    CloudWatch --> SQS
+    XRay --> EC2_1
+    XRay --> EC2_2
+    XRay --> Lambda
+    
+    %% Alerts
+    CloudWatch --> SNS
+    SNS --> EmailService
+    
+    %% Security
+    IAM -.->|Roles & Policies| EC2_1
+    IAM -.->|Roles & Policies| EC2_2
+    IAM -.->|Execution Role| Lambda
+    KMS -.->|Encryption| RDS_Primary
+    KMS -.->|Encryption| S3_Assets
+    SecurityGroups -.->|Network Security| ALB
+    SecurityGroups -.->|Network Security| EC2_1
+    SecurityGroups -.->|Network Security| EC2_2
+    
+    %% External Integrations
+    EC2_1 -.->|🐍 Requests<br/>Payment API| PaymentGateway
+    EC2_2 -.->|🐍 Requests<br/>Payment API| PaymentGateway
+    
+    %% NAT Gateway for Outbound
+    NAT1 -.->|Outbound Internet| IGW
+    NAT2 -.->|Outbound Internet| IGW
+    
+    %% Application Architecture Details
+    subgraph AppDetails["🐍 Python Flask Application Architecture"]
+        Frontend[🎨 Frontend Layer<br/>• Jinja2 Templates<br/>• Bootstrap 5 CSS<br/>• jQuery/JavaScript<br/>• Responsive Design]
+        
+        Backend[⚙️ Backend Layer<br/>• Flask Web Framework<br/>• Flask-SQLAlchemy ORM<br/>• Flask-Login Auth<br/>• Flask-WTF Forms<br/>• Blueprint Structure]
+        
+        Database[🗄️ Database Layer<br/>• User Management<br/>• Product Catalog<br/>• Order Processing<br/>• Inventory Control<br/>• Payment Records]
+        
+        Cache[⚡ Caching Layer<br/>• Redis Session Store<br/>• Product Cache<br/>• Shopping Cart<br/>• API Response Cache]
+    end
+    
+    %% Application Layer Connections
+    Frontend -.-> Backend
+    Backend -.-> Database
+    Backend -.-> Cache
+    
+    %% Styling
+    classDef aws fill:#ff9900,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef compute fill:#ec7211,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef database fill:#3f48cc,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef network fill:#8c4fff,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef security fill:#dd344c,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef storage fill:#569a31,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef monitoring fill:#759c3e,stroke:#232f3e,stroke-width:2px,color:#fff
+    classDef python fill:#3776ab,stroke:#ffd343,stroke-width:3px,color:#fff
+    classDef application fill:#2e8b57,stroke:#ffffff,stroke-width:2px,color:#fff
+    
+    class AWS,VPC aws
+    class EC2_1,EC2_2,ASG,LaunchTemplate,ScalingPolicy,Lambda compute
+    class RDS_Primary,RDS_Standby,ElastiCache1,ElastiCache2 database
+    class ALB,IGW,NAT1,NAT2,Route53,CloudFront,WAF network
+    class SecurityGroups,IAM,KMS,Secrets,Security security
+    class S3_Assets,S3_Backups,Storage storage
+    class CloudWatch,CloudTrail,XRay,SNS,Monitoring monitoring
+    class Frontend,Backend,Database,Cache,AppDetails python
+    class SES,SQS,Services application
