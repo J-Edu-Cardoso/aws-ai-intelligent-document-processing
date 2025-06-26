@@ -1,8 +1,15 @@
 # 🚀 AWS Multi-AZ Web Application Deployment
 
-## 📋 Visão Geral
+## 📋 Descrição
 
-Esta implantação apresenta uma arquitetura AWS altamente disponível e escalável para aplicações web, distribuída em múltiplas Zonas de Disponibilidade (AZs) com recursos de auto-scaling, monitoramento e segurança robustos.
+Arquitetura AWS resiliente e escalável para aplicações web com alta disponibilidade, distribuída em duas Zonas de Disponibilidade. Inclui Application Load Balancer, Auto Scaling Group, RDS Multi-AZ, S3 Storage e monitoramento completo via CloudWatch/SNS.
+
+**Recursos principais:**
+- ✅ **Alta Disponibilidade**: Multi-AZ deployment com failover automático
+- ✅ **Escalabilidade**: Auto Scaling baseado em CPU
+- ✅ **Segurança**: Security Groups restritivos e subnets privadas
+- ✅ **Monitoramento**: Alertas automáticos e métricas em tempo real
+- ✅ **Backup**: RDS automated backups e S3 versioning
 
 ## 🏗️ Arquitetura
 
@@ -280,13 +287,15 @@ aws rds describe-db-instances --db-instance-identifier <db-id>
 - Inclua logs e detalhes do ambiente
 - Especifique steps para reproduzir o problema
 
-## 📞 Suporte
+**Desenvolvido por:** [![Linkedin Badge](https://img.shields.io/badge/-Eduardo-blue?style=flat-square&logo=linkedin&logoColor=white&link=https://www.linkedin.com/in/seu-perfil)](https://www.linkedin.com/in/jos%C3%A9-eduardo-cardoso-webhaker) [![GitHub Badge](https://img.shields.io/badge/-EduCard-black?style=flat-square&logo=github&logoColor=white&link=https://github.com/seu-usuario)](https://github.com/J-Edu-Cardoso)
 
-Para suporte técnico ou dúvidas sobre esta implantação:
+## 📞 Contato
 
-- **Email**: devops-team@company.com
-- **Slack**: #aws-support
-- **On-call**: +55 (31) 9999-9999
+Este é um projeto de estudos pessoal. Para dúvidas ou sugestões:
+
+- **GitHub Issues**: Abra uma issue neste repositório
+- [![Linkedin Badge](https://img.shields.io/badge/-Eduardo-blue?style=flat-square&logo=linkedin&logoColor=white&link=https://www.linkedin.com/in/seu-perfil)](https://www.linkedin.com/in/jos%C3%A9-eduardo-cardoso-webhaker)
+- [![GitHub Badge](https://img.shields.io/badge/-EduCard-black?style=flat-square&logo=github&logoColor=white&link=https://github.com/seu-usuario)](https://github.com/J-Edu-Cardoso)
 
 ---
 
@@ -296,6 +305,6 @@ Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICEN
 
 ---
 
+**Projeto desenvolvido como estudo de arquiteturas AWS por Eduardo Cardoso**  
 **Última atualização**: Junho 2025  
-**Versão**: 1.0.0  
-**Mantido por**: DevOps Team
+**Versão**: 1.0.0
